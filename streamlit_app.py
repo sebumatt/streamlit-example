@@ -1,40 +1,33 @@
-import altair as alt
-import numpy as np
-import pandas as pd
 import streamlit as st
+import openai
 
-"""
-# Welcome to Streamlit!
+def generate_solution(head, flow, material, description):
+    # Combine the inputs into a prompt for the AI
+    prompt = f"Head: {head}\nFlow: {flow}\nMaterial: {material}\nDescription: {description}\n\nSuggest a suitable pump solution:"
+    
+    # Call to OpenAI's API (replace 'YOUR_API_KEY' with your actual API key)
+    response = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=prompt,
+        max_tokens=150
+    )
+    return response.choices[0].text.strip()
 
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:.
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
+def main():
+    st.title("Pump Selection Assistant")
 
-In the meantime, below is an example of what you can do with just a few lines of code:
-"""
+    # Input fields
+    head = st.number_input("Head (in meters)", min_value=0.0, step=0.1)
+    flow = st.number_input("Flow (in cubic meters per hour)", min_value=0.0, step=0.1)
+    material = st.selectbox("Material", ["Steel", "Copper", "Aluminum", "Plastic"])
 
-num_points = st.slider("Number of points in spiral", 1, 10000, 1100)
-num_turns = st.slider("Number of turns in spiral", 1, 300, 31)
+    # Description field
+    description = st.text_area("Describe your application")
 
-indices = np.linspace(0, 1, num_points)
-theta = 2 * np.pi * num_turns * indices
-radius = indices
+    # Button to generate solution
+    if st.button("Generate Solution"):
+        solution = generate_solution(head, flow, material, description)
+        st.text_area("Suggested Solution", solution, height=300)
 
-x = radius * np.cos(theta)
-y = radius * np.sin(theta)
-
-df = pd.DataFrame({
-    "x": x,
-    "y": y,
-    "idx": indices,
-    "rand": np.random.randn(num_points),
-})
-
-st.altair_chart(alt.Chart(df, height=700, width=700)
-    .mark_point(filled=True)
-    .encode(
-        x=alt.X("x", axis=None),
-        y=alt.Y("y", axis=None),
-        color=alt.Color("idx", legend=None, scale=alt.Scale()),
-        size=alt.Size("rand", legend=None, scale=alt.Scale(range=[1, 150])),
-    ))
+if __name__ == "__main__":
+    main()
